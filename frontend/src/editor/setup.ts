@@ -14,8 +14,10 @@ import {
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { syntaxHighlighting, defaultHighlightStyle } from "@codemirror/language";
 import { search, searchKeymap } from "@codemirror/search";
+import { autosave } from "./autosave";
+import { livePreview } from "./live-preview";
 
-export function createEditorState(doc: string): EditorState {
+export function createEditorState(doc: string, sectionId: string): EditorState {
   return EditorState.create({
     doc,
     extensions: [
@@ -28,16 +30,19 @@ export function createEditorState(doc: string): EditorState {
       keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
       markdown({ base: markdownLanguage }),
       syntaxHighlighting(defaultHighlightStyle),
+      livePreview,
+      autosave(sectionId),
     ],
   });
 }
 
 export function createEditorView(
   parent: HTMLElement,
-  doc: string
+  doc: string,
+  sectionId: string
 ): EditorView {
   return new EditorView({
-    state: createEditorState(doc),
+    state: createEditorState(doc, sectionId),
     parent,
   });
 }
