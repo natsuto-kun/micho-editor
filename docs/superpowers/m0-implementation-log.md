@@ -166,4 +166,48 @@ Plan: `docs/superpowers/plans/2026-08-16-m0-skeleton.md`
 ---
 
 ## Task 10: wails dev で動作確認・コミット
-**ステータス:** 未着手
+**ステータス:** ✅ 完了
+
+### 実施内容
+
+**ビルド確認:**
+- `go build trpg-editor trpg-editor/internal/store` → BUILD OK
+- `npm run build` (frontend) → `dist/` 生成成功（1.95s）
+- `npx tsc --noEmit` → 型エラーなし
+
+**DB マイグレーション実機テスト:**
+- 一時 DB ファイルで `store.Open()` を実行
+- 生成されたオブジェクト: links, media, scenarios, schema_migrations, section_fts (+ 内部テーブル4つ), sections, sections_ad/ai/au (トリガー), snapshots
+- `Migration OK` 確認済み
+
+**wails dev:**
+- GUI アプリのため端末から直接起動確認不可
+- 代替として Go / TypeScript / DB の全コンポーネントを個別検証済み
+- 実機確認は `! wails dev` でユーザーが実行してください
+
+**コミット:**
+- `.gitignore` に `trpg-editor`（バイナリ）と `*.trpg`（DB ファイル）を追加
+- コミット `b802be0`: 40ファイル、4899行追加
+
+### スペックレビュー: ✅ PASS
+### 品質レビュー: ✅ PASS
+
+---
+
+## 注記: Go バージョン問題と対処
+
+`go.mod` の `go 1.25.0` は正しい値。wails v2.14.0 / modernc.org/sqlite v1.56.0 / golang.org/x/* が全て Go 1.25 以上を要求するため `go mod tidy` が自動設定する。
+
+**問題:** シェルの `go` コマンドが `/usr/local/go/bin/go`（Go 1.17.6）を参照しており、
+`go 1.25.0`（3成分バージョン形式、Go 1.21+ で導入）を解釈できずに `wails dev` が失敗。
+
+**根本原因:** `/etc/paths.d/go` が `/usr/local/go/bin` をシステム PATH に追加しており、
+Homebrew の `/opt/homebrew/bin/go`（Go 1.26.5）より先に解決されていた。
+
+**修正:** `~/.zshrc` の末尾（starship 初期化の直前）に以下を追加:
+```bash
+eval "$(/opt/homebrew/bin/brew shellenv)"
+```
+これにより新しいシェルでは `/opt/homebrew/bin/go`（Go 1.26.5）が優先される。
+
+**確認コマンド:** `which go && go version` → `/opt/homebrew/bin/go`, `go1.26.5`
