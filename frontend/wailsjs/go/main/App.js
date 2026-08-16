@@ -6,34 +6,30 @@ export function AckFlush() {
   return window['go']['main']['App']['AckFlush']();
 }
 
-export function CreateSection(scenarioID, parentID, kind, title, afterID) {
-  return window['go']['main']['App']['CreateSection'](scenarioID, parentID, kind, title, afterID);
+export function CreateSection(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['CreateSection'](arg1, arg2, arg3, arg4, arg5);
 }
 
-export function DeleteSection(id) {
-  return window['go']['main']['App']['DeleteSection'](id);
+export function DeleteSection(arg1) {
+  return window['go']['main']['App']['DeleteSection'](arg1);
 }
 
-export function GetSection(id) {
-  return window['go']['main']['App']['GetSection'](id);
+export function GetSection(arg1) {
+  return window['go']['main']['App']['GetSection'](arg1);
 }
 
-export function ListSections(scenarioID) {
-  return window['go']['main']['App']['ListSections'](scenarioID);
+export function ListSections(arg1) {
+  return window['go']['main']['App']['ListSections'](arg1);
 }
 
-export function MoveSection(id, newParentID, afterID) {
-  return window['go']['main']['App']['MoveSection'](id, newParentID, afterID);
+export function MoveSection(arg1, arg2, arg3) {
+  return window['go']['main']['App']['MoveSection'](arg1, arg2, arg3);
 }
 
 export function OpenScenario() {
   return window['go']['main']['App']['OpenScenario']();
 }
 
-export function SaveSection(id, body, rev) {
-  return window['go']['main']['App']['SaveSection'](id, body, rev);
-}
-
-export function Store() {
-  return window['go']['main']['App']['Store']();
+export function SaveSection(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SaveSection'](arg1, arg2, arg3);
 }

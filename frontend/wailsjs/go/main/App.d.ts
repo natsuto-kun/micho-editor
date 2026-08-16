@@ -3,11 +3,17 @@
 import {store} from '../models';
 
 export function AckFlush():Promise<void>;
-export function CreateSection(scenarioID:string,parentID:string,kind:string,title:string,afterID:string):Promise<store.SectionMeta>;
-export function DeleteSection(id:string):Promise<void>;
-export function GetSection(id:string):Promise<store.Section>;
-export function ListSections(scenarioID:string):Promise<Array<store.SectionMeta>>;
-export function MoveSection(id:string,newParentID:string,afterID:string):Promise<void>;
+
+export function CreateSection(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string):Promise<store.SectionMeta>;
+
+export function DeleteSection(arg1:string):Promise<void>;
+
+export function GetSection(arg1:string):Promise<store.Section>;
+
+export function ListSections(arg1:string):Promise<Array<store.SectionMeta>>;
+
+export function MoveSection(arg1:string,arg2:string,arg3:string):Promise<void>;
+
 export function OpenScenario():Promise<store.Scenario>;
-export function SaveSection(id:string,body:string,rev:number):Promise<store.SaveResult>;
-export function Store():Promise<store.Store>;
+
+export function SaveSection(arg1:string,arg2:string,arg3:number):Promise<store.SaveResult>;
