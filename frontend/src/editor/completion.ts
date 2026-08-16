@@ -34,8 +34,8 @@ export async function directiveCompletion(
   const line = context.state.doc.lineAt(context.pos);
   const textBefore = line.text.slice(0, context.pos - line.from);
 
-  // ::: ディレクティブ補完
-  const directiveMatch = textBefore.match(/^:::(\w*)$/);
+  // ::: ディレクティブ補完（閉じ ::: は除外：\w+ で 1 文字以上必須）
+  const directiveMatch = textBefore.match(/^:::(\w+)$/);
   if (directiveMatch) {
     const query = directiveMatch[1];
     return {
