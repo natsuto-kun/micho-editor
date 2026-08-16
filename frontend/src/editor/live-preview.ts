@@ -103,7 +103,13 @@ function buildDecorations(view: EditorView): DecorationSet {
     const cursorOnOpen = cursor >= openLine.from && cursor <= openLine.to;
     const cursorOnClose = cursor >= closeLine.from && cursor <= closeLine.to;
 
-    // Opening line: replaced by header widget unless cursor is on it
+    // Opening line: replaced by header widget unless cursor is on it.
+    // Always apply a line decoration so the line stays visually part of the block.
+    builder.add(
+      openLine.from,
+      openLine.from,
+      Decoration.line({ class: `directive-open directive-${block.type}-open` })
+    );
     if (!cursorOnOpen) {
       const openEnd = Math.min(openLine.to + 1, doc.length);
       builder.add(
@@ -128,7 +134,13 @@ function buildDecorations(view: EditorView): DecorationSet {
       );
     }
 
-    // Closing line: replaced by footer widget unless cursor is on it
+    // Closing line: replaced by footer widget unless cursor is on it.
+    // Always apply a line decoration so the line stays visually part of the block.
+    builder.add(
+      closeLine.from,
+      closeLine.from,
+      Decoration.line({ class: `directive-close directive-${block.type}-close` })
+    );
     if (!cursorOnClose) {
       const closeEnd = Math.min(closeLine.to + 1, doc.length);
       builder.add(
