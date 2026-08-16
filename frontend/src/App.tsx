@@ -105,9 +105,7 @@ export default function App() {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        useUIStore.getState().setSearchOpen(
-          !useUIStore.getState().searchOpen
-        );
+        useUIStore.getState().toggleSearch();
       }
     };
     window.addEventListener("keydown", handler);
