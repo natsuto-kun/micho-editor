@@ -101,7 +101,7 @@ func TestLIKEFallback(t *testing.T) {
 	insertSection(t, db, "s2", "sc1", "scene", "序盤", "本文")
 	insertSection(t, db, "s3", "sc1", "scene", "終章", "本文")
 
-	// 2-rune query → LIKE fallback
+	// 1-rune query → LIKE fallback
 	hits, err := search.Search(db, "sc1", "序", 20)
 	if err != nil {
 		t.Fatal(err)
@@ -133,6 +133,9 @@ func TestCrossScenarioIsolation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if len(hits) == 0 {
+		t.Fatal("expected at least one hit for sc1")
+	}
 	for _, h := range hits {
 		if h.ID != "s1" {
 			t.Errorf("got hit from wrong scenario: id=%s", h.ID)
@@ -150,7 +153,7 @@ func TestHTMLEscapeInSnip(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(hits) == 0 {
-		t.Skip("no hits (trigram may not index short body)")
+		t.Fatal("expected at least one hit for XSS escape test")
 	}
 	for _, h := range hits {
 		if strings.Contains(h.Snip, "<script>") {

@@ -6,6 +6,9 @@ import (
 	"strings"
 )
 
+// snipReplacer converts control-char markers (written by SQLite snippet()) into HTML tags.
+var snipReplacer = strings.NewReplacer("\x01", "<mark>", "\x02", "</mark>")
+
 // Hit is a single search result with a highlighted body snippet.
 type Hit struct {
 	ID    string  `json:"id"`
@@ -44,7 +47,7 @@ func ftsSearch(db *sql.DB, scenarioID, q string, limit int) ([]Hit, error) {
 		  JOIN sections sec ON sec.rowid = section_fts.rowid
 		 WHERE section_fts MATCH ?
 		   AND sec.scenario_id = ?
-		 ORDER BY score
+		 ORDER BY score -- bm25 returns negative; ASC puts best match first
 		 LIMIT ?`,
 		open, close, open, close, ftsQuery, scenarioID, limit)
 	if err != nil {
@@ -71,7 +74,7 @@ func scanFTSHits(rows *sql.Rows) ([]Hit, error) {
 			rawSnip = titleSnip
 		}
 		escaped := html.EscapeString(rawSnip)
-		h.Snip = strings.NewReplacer("\x01", "<mark>", "\x02", "</mark>").Replace(escaped)
+		h.Snip = snipReplacer.Replace(escaped)
 		hits = append(hits, h)
 	}
 	if err := rows.Err(); err != nil {
@@ -106,9 +109,10 @@ func scanHits(rows *sql.Rows) ([]Hit, error) {
 		if err := rows.Scan(&h.ID, &h.Title, &h.Kind, &rawSnip, &h.Score); err != nil {
 			return nil, err
 		}
-		// HTML-escape the raw text, then restore marker tags as safe HTML.
+		// For LIKE results rawSnip is always "", so the escape and replace below are
+		// no-ops; the function handles both FTS and LIKE cases uniformly.
 		escaped := html.EscapeString(rawSnip)
-		h.Snip = strings.NewReplacer("\x01", "<mark>", "\x02", "</mark>").Replace(escaped)
+		h.Snip = snipReplacer.Replace(escaped)
 		hits = append(hits, h)
 	}
 	if err := rows.Err(); err != nil {
