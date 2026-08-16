@@ -1,0 +1,88 @@
+import {
+  CompletionContext,
+  CompletionResult,
+} from "@codemirror/autocomplete";
+import { listSections } from "../api/bindings";
+import { useScenarioStore } from "../stores/scenarioStore";
+
+let sectionTitleCache: string[] = [];
+let lastCacheFetchMs = 0;
+const CACHE_TTL_MS = 30_000;
+
+async function getSectionTitles(): Promise<string[]> {
+  const now = Date.now();
+  if (sectionTitleCache.length > 0 && now - lastCacheFetchMs < CACHE_TTL_MS) {
+    return sectionTitleCache;
+  }
+  const scenarioId = useScenarioStore.getState().scenarioId;
+  if (!scenarioId) return [];
+  const sections = await listSections(scenarioId);
+  sectionTitleCache = sections.map((s) => s.title);
+  lastCacheFetchMs = now;
+  return sectionTitleCache;
+}
+
+export async function directiveCompletion(
+  context: CompletionContext
+): Promise<CompletionResult | null> {
+  const line = context.state.doc.lineAt(context.pos);
+  const textBefore = line.text.slice(0, context.pos - line.from);
+
+  // ::: ディレクティブ補完
+  if (/^:::\w*$/.test(textBefore)) {
+    return {
+      from: line.from + 3,
+      options: [
+        { label: "npc", apply: "npc Name | Role | Age\n\n:::" },
+        { label: "handout", apply: "handout HO1 | PlayerA\n\n:::" },
+        { label: "secret", apply: "secret\n\n:::" },
+      ],
+    };
+  }
+
+  // [[WikiLink]] 補完
+  const wikiMatch = textBefore.match(/\[\[([^\]]*)$/);
+  if (wikiMatch) {
+    const query = wikiMatch[1];
+    const titles = await getSectionTitles();
+    return {
+      from: context.pos - query.length,
+      options: titles.map((t) => ({ label: t, apply: t + "]]" })),
+      validFor: /^[^\]]*$/,
+    };
+  }
+
+  // @NPC 補完
+  const npcMatch = textBefore.match(/@([^\s@]*)$/);
+  if (npcMatch) {
+    const query = npcMatch[1];
+    const docText = context.state.doc.toString();
+    const npcNames = [
+      ...docText.matchAll(/^:::npc\s+([^|\n]+)/gm),
+    ]
+      .map((m) => m[1].trim())
+      .filter((v, i, arr) => arr.indexOf(v) === i);
+    return {
+      from: context.pos - query.length - 1,
+      options: npcNames.map((n) => ({ label: n, apply: "@" + n })),
+    };
+  }
+
+  // #tag 補完（Markdown 見出しは除外）
+  const tagMatch = textBefore.match(/#([^\s#]*)$/);
+  if (tagMatch) {
+    const beforeHash = textBefore.slice(0, textBefore.lastIndexOf("#"));
+    if (/^\s*$/.test(beforeHash)) return null; // 行頭 → Markdown 見出し
+    const query = tagMatch[1];
+    const docText = context.state.doc.toString();
+    const tags = [...docText.matchAll(/#([^\s#]+)/g)]
+      .map((m) => m[1])
+      .filter((v, i, arr) => arr.indexOf(v) === i);
+    return {
+      from: context.pos - query.length - 1,
+      options: tags.map((t) => ({ label: t, apply: "#" + t })),
+    };
+  }
+
+  return null;
+}
