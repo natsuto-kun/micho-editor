@@ -14,8 +14,11 @@ import {
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { syntaxHighlighting, defaultHighlightStyle } from "@codemirror/language";
 import { search, searchKeymap } from "@codemirror/search";
+import { autocompletion, completionKeymap } from "@codemirror/autocomplete";
 import { autosave } from "./autosave";
 import { livePreview } from "./live-preview";
+import { directiveCompletion } from "./completion";
+import "./widgets/widgets.css";
 
 export function createEditorState(doc: string, sectionId: string): EditorState {
   return EditorState.create({
@@ -27,9 +30,10 @@ export function createEditorState(doc: string, sectionId: string): EditorState {
       drawSelection(),
       highlightActiveLine(),
       search({ top: true }),
-      keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
+      keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, ...completionKeymap]),
       markdown({ base: markdownLanguage }),
       syntaxHighlighting(defaultHighlightStyle),
+      autocompletion({ override: [directiveCompletion] }),
       livePreview,
       autosave(sectionId),
     ],

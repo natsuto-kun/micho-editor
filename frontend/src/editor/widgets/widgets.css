@@ -1,0 +1,179 @@
+/* ── Directive Header Widgets ─────────────────── */
+.directive-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.directive-npc-header {
+  background: #3a3a60;
+  border-top: 1px solid #4a4a70;
+  border-left: 1px solid #4a4a70;
+  border-right: 1px solid #4a4a70;
+  border-radius: 4px 4px 0 0;
+}
+
+.directive-handout-header {
+  background: #0a1a2a;
+  border-top: 2px dashed #3a6a9a;
+  border-left: 2px dashed #3a6a9a;
+  border-right: 2px dashed #3a6a9a;
+  border-radius: 4px 4px 0 0;
+}
+
+.directive-secret-header {
+  background: #111;
+  border-left: 4px solid #666;
+  opacity: 0.85;
+}
+
+.directive-header .badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.directive-npc-header .badge {
+  background: #7c6af7;
+  color: #fff;
+}
+
+.directive-handout-header .badge {
+  color: #6ab0e0;
+}
+
+.directive-secret-header .badge {
+  color: #888;
+  letter-spacing: 2px;
+}
+
+.directive-npc-header .name {
+  color: #e2d9ff;
+  font-weight: 700;
+}
+
+.directive-npc-header .meta {
+  color: #888;
+  font-size: 11px;
+}
+
+.directive-handout-header .id {
+  color: #90d0f0;
+  font-weight: 700;
+}
+
+.directive-handout-header .target {
+  color: #999;
+  font-size: 12px;
+}
+
+/* ── Body line decorations ─────────────────────── */
+.cm-line.directive-npc-body {
+  background: #1e1e38;
+  border-left: 1px solid #4a4a70;
+  border-right: 1px solid #4a4a70;
+  padding-left: 12px;
+  color: #ccc;
+}
+
+.cm-line.directive-handout-body {
+  background: #0a1a2a;
+  border-left: 2px dashed #3a6a9a;
+  border-right: 2px dashed #3a6a9a;
+  padding-left: 12px;
+  color: #b0d8f0;
+}
+
+.cm-line.directive-secret-body {
+  background: #111;
+  border-left: 4px solid #666;
+  padding-left: 12px;
+  color: #aaa;
+  opacity: 0.75;
+}
+
+/* ── Open-line decorations (cursor on opening :::type) ───── */
+.cm-line.directive-npc-open {
+  background: #3a3a60;
+  border-top: 1px solid #4a4a70;
+  border-left: 1px solid #4a4a70;
+  border-right: 1px solid #4a4a70;
+  border-radius: 4px 4px 0 0;
+  color: #9988dd;
+  font-size: 11px;
+}
+
+.cm-line.directive-handout-open {
+  background: #0a1a2a;
+  border-top: 2px dashed #3a6a9a;
+  border-left: 2px dashed #3a6a9a;
+  border-right: 2px dashed #3a6a9a;
+  border-radius: 4px 4px 0 0;
+  color: #3a6a9a;
+  font-size: 11px;
+}
+
+.cm-line.directive-secret-open {
+  background: #111;
+  border-left: 4px solid #666;
+  color: #555;
+  font-size: 11px;
+}
+
+/* ── Close-line decorations (cursor on closing :::) ──────── */
+.cm-line.directive-npc-close {
+  background: #3a3a60;
+  border-bottom: 1px solid #4a4a70;
+  border-left: 1px solid #4a4a70;
+  border-right: 1px solid #4a4a70;
+  border-radius: 0 0 4px 4px;
+  color: #666;
+  font-size: 11px;
+}
+
+.cm-line.directive-handout-close {
+  background: #0a1a2a;
+  border-bottom: 2px dashed #3a6a9a;
+  border-left: 2px dashed #3a6a9a;
+  border-right: 2px dashed #3a6a9a;
+  border-radius: 0 0 4px 4px;
+  color: #3a6a9a;
+  font-size: 11px;
+}
+
+.cm-line.directive-secret-close {
+  background: #111;
+  border-left: 4px solid #666;
+  color: #555;
+  font-size: 11px;
+}
+
+/* ── Directive Footer Widgets ─────────────────── */
+.directive-footer {
+  height: 4px;
+  font-family: inherit;
+}
+
+.directive-npc-footer {
+  background: #3a3a60;
+  border-bottom: 1px solid #4a4a70;
+  border-left: 1px solid #4a4a70;
+  border-right: 1px solid #4a4a70;
+  border-radius: 0 0 4px 4px;
+}
+
+.directive-handout-footer {
+  border-bottom: 2px dashed #3a6a9a;
+  border-left: 2px dashed #3a6a9a;
+  border-right: 2px dashed #3a6a9a;
+  border-radius: 0 0 4px 4px;
+}
+
+.directive-secret-footer {
+  border-left: 4px solid #666;
+}
