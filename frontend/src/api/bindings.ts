@@ -7,13 +7,15 @@ import {
   MoveSection as _MoveSection,
   OpenScenario as _OpenScenario,
   SaveSection as _SaveSection,
+  Search as _Search,
 } from "../../wailsjs/go/main/App";
-import { store } from "../../wailsjs/go/models";
+import { store, search } from "../../wailsjs/go/models";
 
 export type Scenario = store.Scenario;
 export type SectionMeta = store.SectionMeta;
 export type Section = store.Section;
 export type SaveResult = store.SaveResult;
+export type SearchHit = search.Hit;
 
 export const openScenario = (): Promise<store.Scenario> => _OpenScenario();
 
@@ -47,3 +49,9 @@ export const moveSection = (
 export const deleteSection = (id: string): Promise<void> => _DeleteSection(id);
 
 export const ackFlush = (): Promise<void> => _AckFlush();
+
+export const searchSections = (
+  scenarioID: string,
+  query: string,
+  limit: number
+): Promise<search.Hit[]> => _Search(scenarioID, query, limit);

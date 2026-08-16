@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"trpg-editor/internal/search"
 	"trpg-editor/internal/store"
 )
 
@@ -113,4 +114,10 @@ func (a *App) MoveSection(id, newParentID, afterID string) error {
 // DeleteSection removes a section and its children.
 func (a *App) DeleteSection(id string) error {
 	return a.store.DeleteSection(id)
+}
+
+// Search searches sections by full text (FTS5 for ≥3-rune queries, title LIKE otherwise).
+// limit caps the number of results; pass 20 for typical search panel use.
+func (a *App) Search(scenarioID, query string, limit int) ([]search.Hit, error) {
+	return search.Search(a.store.DB(), scenarioID, query, limit)
 }

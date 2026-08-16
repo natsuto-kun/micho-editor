@@ -33,3 +33,7 @@ export function OpenScenario() {
 export function SaveSection(arg1, arg2, arg3) {
   return window['go']['main']['App']['SaveSection'](arg1, arg2, arg3);
 }
+
+export function Search(arg1, arg2, arg3) {
+  return window['go']['main']['App']['Search'](arg1, arg2, arg3);
+}
