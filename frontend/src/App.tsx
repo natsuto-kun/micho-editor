@@ -1,57 +1,158 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { EditorView } from "@codemirror/view";
+import { EventsOn } from "../wailsjs/runtime/runtime";
 import { createEditorView } from "./editor/setup";
-
-const INITIAL_DOC = `# TRPG シナリオエディタ
-
-ここに日本語を入力して IME 変換を確認してください。
-
-例: 「にほんご」と入力して漢字に変換してみてください。
-`;
+import { Outline } from "./components/Outline";
+import { useScenarioStore } from "./stores/scenarioStore";
+import { useUIStore } from "./stores/uiStore";
+import * as API from "./api/bindings";
 
 export default function App() {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
-  const [composing, setComposing] = useState(false);
 
-  useEffect(() => {
-    if (!containerRef.current) return;
+  const setScenario = useScenarioStore((s) => s.setScenario);
+  const setSections = useScenarioStore((s) => s.setSections);
+  const upsertSection = useScenarioStore((s) => s.upsertSection);
+  const scenarioId = useScenarioStore((s) => s.scenarioId);
 
-    const view = createEditorView(containerRef.current, INITIAL_DOC, "m0-debug");
-    viewRef.current = view;
+  const activeSectionId = useUIStore((s) => s.activeSectionId);
+  const setActiveSectionId = useUIStore((s) => s.setActiveSectionId);
 
-    const dom = view.dom;
-    const onStart = () => setComposing(true);
-    const onEnd = () => setComposing(false);
-    dom.addEventListener("compositionstart", onStart);
-    dom.addEventListener("compositionend", onEnd);
-
-    return () => {
-      dom.removeEventListener("compositionstart", onStart);
-      dom.removeEventListener("compositionend", onEnd);
-      view.destroy();
-      viewRef.current = null;
-    };
+  // Flush current editor content to the backend.
+  const flushCurrent = useCallback(async () => {
+    const id = useUIStore.getState().activeSectionId;
+    if (!viewRef.current || !id) return;
+    const store = useScenarioStore.getState();
+    if (!store.isDirty(id)) return;
+    const body = viewRef.current.state.doc.toString();
+    const rev = store.revOf(id);
+    try {
+      const res = await API.saveSection(id, body, rev);
+      store.markSaved(id, res.rev);
+    } catch (e) {
+      store.markSaveError(id, String(e));
+    }
   }, []);
 
+  // Load scenario and sections on mount.
+  useEffect(() => {
+    async function init() {
+      const scenario = await API.openScenario();
+      setScenario(scenario.id, scenario.title);
+      const metas = await API.listSections(scenario.id);
+      setSections(metas);
+    }
+    init();
+  }, []);
+
+  // Handle section switch: flush current → destroy editor → load new section → mount editor.
+  const switchSection = useCallback(
+    async (id: string) => {
+      if (id === useUIStore.getState().activeSectionId) return;
+      await flushCurrent();
+
+      if (viewRef.current) {
+        viewRef.current.destroy();
+        viewRef.current = null;
+      }
+
+      const section = await API.getSection(id);
+      setActiveSectionId(id);
+
+      if (containerRef.current) {
+        viewRef.current = createEditorView(
+          containerRef.current,
+          section.body,
+          id
+        );
+      }
+    },
+    [flushCurrent]
+  );
+
+  // Auto-select first section when sections load and none is active.
+  const sections = useScenarioStore((s) => s.sections);
+  useEffect(() => {
+    if (sections.length > 0 && !useUIStore.getState().activeSectionId) {
+      const first = [...sections].sort((a, b) =>
+        a.sortKey < b.sortKey ? -1 : 1
+      )[0];
+      switchSection(first.id);
+    }
+  }, [sections.length]);
+
+  // Flush on window blur.
+  useEffect(() => {
+    window.addEventListener("blur", flushCurrent);
+    return () => window.removeEventListener("blur", flushCurrent);
+  }, [flushCurrent]);
+
+  // Flush before app close.
+  useEffect(() => {
+    const off = EventsOn("beforeClose", async () => {
+      await flushCurrent();
+      await API.ackFlush();
+    });
+    return off;
+  }, [flushCurrent]);
+
+  // Add a new section at the end.
+  const handleAddSection = useCallback(async () => {
+    const sid = useScenarioStore.getState().scenarioId;
+    if (!sid) return;
+    const secs = useScenarioStore.getState().sections;
+    const lastId =
+      secs.length > 0
+        ? [...secs].sort((a, b) => (a.sortKey < b.sortKey ? -1 : 1)).at(-1)!
+            .id
+        : "";
+    const meta = await API.createSection(
+      sid,
+      "",
+      "scene",
+      "新規セクション",
+      lastId
+    );
+    upsertSection(meta);
+    await switchSection(meta.id);
+  }, [switchSection]);
+
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-      <div
-        style={{
-          padding: "4px 12px",
-          background: composing ? "#f59e0b" : "#1e293b",
-          color: composing ? "#000" : "#94a3b8",
-          fontSize: "12px",
-          fontFamily: "monospace",
-          transition: "background 0.1s",
-        }}
-      >
-        {composing ? "⌨ IME 変換中 — composing: true" : "composing: false"}
+    <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
+      {/* Sidebar */}
+      <div style={{ width: 240, flexShrink: 0, display: "flex", flexDirection: "column" }}>
+        <Outline
+          onSectionClick={switchSection}
+          onAddSection={handleAddSection}
+        />
       </div>
-      <div
-        ref={containerRef}
-        style={{ flex: 1, overflow: "auto" }}
-      />
+
+      {/* Editor pane */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        {activeSectionId === null && (
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#475569",
+              fontSize: "14px",
+            }}
+          >
+            セクションを選択するか「+ セクション追加」をクリックしてください
+          </div>
+        )}
+        <div
+          ref={containerRef}
+          style={{
+            flex: 1,
+            overflow: "auto",
+            display: activeSectionId !== null ? "block" : "none",
+          }}
+        />
+      </div>
     </div>
   );
 }
