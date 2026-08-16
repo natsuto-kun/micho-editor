@@ -38,11 +38,8 @@ describe("parseDirectiveBlocks", () => {
     const blocks = parseDirectiveBlocks(doc, fullRange(doc));
 
     expect(blocks).toHaveLength(1);
-    const body =
-      blocks[0].bodyFrom <= blocks[0].bodyTo
-        ? doc.sliceString(blocks[0].bodyFrom, blocks[0].bodyTo)
-        : "";
-    expect(body).toBe("");
+    expect(blocks[0].bodyFrom).toBe(blocks[0].bodyTo);
+    expect(doc.sliceString(blocks[0].bodyFrom, blocks[0].bodyTo)).toBe("");
   });
 
   it("ignores unclosed blocks", () => {

@@ -10,6 +10,7 @@ export interface DirectiveBlock {
 }
 
 const START_RE = /^:::(npc|handout|secret)\s*(.*)/;
+// NOTE: ネストした directive は非対応。内側の ::: が外側ブロックの閉じ行と誤認識される。
 const END_RE = /^:::$/;
 
 export function parseDirectiveBlocks(
@@ -31,6 +32,7 @@ export function parseDirectiveBlocks(
       if (!m) continue;
 
       let closingLine: ReturnType<typeof doc.line> | null = null;
+      // NOTE: 閉じ行は visible range 外まで走査する場合がある（開始行が visible でも閉じ行が invisible な場合）
       for (let cn = n + 1; cn <= doc.lines; cn++) {
         const cl = doc.line(cn);
         if (END_RE.test(cl.text)) {
@@ -41,13 +43,14 @@ export function parseDirectiveBlocks(
       if (!closingLine) continue;
 
       processed.add(line.from);
+      const bodyFrom = line.to + 1;
       blocks.push({
         type: m[1] as DirectiveBlock["type"],
         params: m[2].trim(),
         from: line.from,
         to: closingLine.to,
-        bodyFrom: line.to + 1,
-        bodyTo: closingLine.from - 1,
+        bodyFrom,
+        bodyTo: Math.max(bodyFrom, closingLine.from - 1),
       });
       n = closingLine.number;
     }
