@@ -1,3 +1,28 @@
+export namespace search {
+	
+	export class Hit {
+	    id: string;
+	    title: string;
+	    kind: string;
+	    snip: string;
+	    score: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Hit(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.title = source["title"];
+	        this.kind = source["kind"];
+	        this.snip = source["snip"];
+	        this.score = source["score"];
+	    }
+	}
+
+}
+
 export namespace store {
 	
 	export class SaveResult {
