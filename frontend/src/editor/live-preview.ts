@@ -8,37 +8,138 @@ import {
 } from "@codemirror/view";
 import { RangeSetBuilder } from "@codemirror/state";
 import { parseDirectiveBlocks, DirectiveBlock } from "./directive-parser";
-import { NpcWidget } from "./widgets/NpcWidget";
-import { HandoutWidget } from "./widgets/HandoutWidget";
-import { SecretWidget } from "./widgets/SecretWidget";
 
-function makeWidget(block: DirectiveBlock, body: string): WidgetType {
-  switch (block.type) {
-    case "npc": return new NpcWidget(block.params, body);
-    case "handout": return new HandoutWidget(block.params, body);
-    case "secret": return new SecretWidget(body);
-    default: {
-      const _exhaustive: never = block.type;
-      throw new Error(`Unknown directive type: ${_exhaustive}`);
+class DirectiveHeaderWidget extends WidgetType {
+  constructor(
+    readonly type: DirectiveBlock["type"],
+    readonly params: string
+  ) {
+    super();
+  }
+
+  eq(other: WidgetType): boolean {
+    return (
+      other instanceof DirectiveHeaderWidget &&
+      other.type === this.type &&
+      other.params === this.params
+    );
+  }
+
+  toDOM(_view: EditorView): HTMLElement {
+    const el = document.createElement("div");
+    el.className = `directive-header directive-${this.type}-header`;
+
+    const badge = document.createElement("span");
+    badge.className = "badge";
+    badge.textContent = this.type.toUpperCase();
+    el.appendChild(badge);
+
+    const parts = this.params.split("|").map((p) => p.trim());
+
+    if (this.type === "npc" && parts[0]) {
+      const nameEl = document.createElement("span");
+      nameEl.className = "name";
+      nameEl.textContent = parts[0];
+      el.appendChild(nameEl);
+      if (parts[1]) {
+        const metaEl = document.createElement("span");
+        metaEl.className = "meta";
+        metaEl.textContent = parts.slice(1).join(" / ");
+        el.appendChild(metaEl);
+      }
+    } else if (this.type === "handout" && parts[0]) {
+      const idEl = document.createElement("span");
+      idEl.className = "id";
+      idEl.textContent = parts[0];
+      el.appendChild(idEl);
+      if (parts[1]) {
+        const targetEl = document.createElement("span");
+        targetEl.className = "target";
+        targetEl.textContent = `→ ${parts[1]}`;
+        el.appendChild(targetEl);
+      }
     }
+
+    return el;
+  }
+
+  ignoreEvent(_event: Event): boolean {
+    return false;
+  }
+}
+
+class DirectiveFooterWidget extends WidgetType {
+  constructor(readonly type: DirectiveBlock["type"]) {
+    super();
+  }
+
+  eq(other: WidgetType): boolean {
+    return (
+      other instanceof DirectiveFooterWidget && other.type === this.type
+    );
+  }
+
+  toDOM(_view: EditorView): HTMLElement {
+    const el = document.createElement("div");
+    el.className = `directive-footer directive-${this.type}-footer`;
+    return el;
+  }
+
+  ignoreEvent(_event: Event): boolean {
+    return false;
   }
 }
 
 function buildDecorations(view: EditorView): DecorationSet {
   const cursor = view.state.selection.main.head;
-  const blocks = parseDirectiveBlocks(view.state.doc, view.visibleRanges);
+  const doc = view.state.doc;
+  const blocks = parseDirectiveBlocks(doc, view.visibleRanges);
   const builder = new RangeSetBuilder<Decoration>();
 
   for (const block of blocks) {
-    if (cursor >= block.from && cursor <= block.to) continue;
+    const openLine = doc.lineAt(block.from);
+    const closeLine = doc.lineAt(block.to);
 
-    const body =
-      block.bodyFrom <= block.bodyTo
-        ? view.state.doc.sliceString(block.bodyFrom, block.bodyTo)
-        : "";
+    const cursorOnOpen = cursor >= openLine.from && cursor <= openLine.to;
+    const cursorOnClose = cursor >= closeLine.from && cursor <= closeLine.to;
 
-    const widget = makeWidget(block, body);
-    builder.add(block.from, block.to, Decoration.replace({ widget, block: true }));
+    // Opening line: replaced by header widget unless cursor is on it
+    if (!cursorOnOpen) {
+      const openEnd = Math.min(openLine.to + 1, doc.length);
+      builder.add(
+        openLine.from,
+        openEnd,
+        Decoration.replace({
+          widget: new DirectiveHeaderWidget(block.type, block.params),
+          block: true,
+        })
+      );
+    }
+
+    // Body lines: styled via line decoration — text remains editable
+    for (let n = openLine.number + 1; n <= closeLine.number - 1; n++) {
+      const line = doc.line(n);
+      builder.add(
+        line.from,
+        line.from,
+        Decoration.line({
+          class: `directive-body directive-${block.type}-body`,
+        })
+      );
+    }
+
+    // Closing line: replaced by footer widget unless cursor is on it
+    if (!cursorOnClose) {
+      const closeEnd = Math.min(closeLine.to + 1, doc.length);
+      builder.add(
+        closeLine.from,
+        closeEnd,
+        Decoration.replace({
+          widget: new DirectiveFooterWidget(block.type),
+          block: true,
+        })
+      );
+    }
   }
 
   return builder.finish();
@@ -61,9 +162,5 @@ export const livePreview = ViewPlugin.fromClass(
   },
   {
     decorations: (v) => v.decorations,
-    provide: (plugin) =>
-      EditorView.atomicRanges.of(
-        (view) => view.plugin(plugin)?.decorations ?? Decoration.none
-      ),
   }
 );
