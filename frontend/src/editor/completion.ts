@@ -5,18 +5,24 @@ import {
 import { listSections } from "../api/bindings";
 import { useScenarioStore } from "../stores/scenarioStore";
 
+let cachedScenarioId = "";
 let sectionTitleCache: string[] = [];
 let lastCacheFetchMs = 0;
 const CACHE_TTL_MS = 30_000;
 
 async function getSectionTitles(): Promise<string[]> {
   const now = Date.now();
-  if (sectionTitleCache.length > 0 && now - lastCacheFetchMs < CACHE_TTL_MS) {
-    return sectionTitleCache;
-  }
   const scenarioId = useScenarioStore.getState().scenarioId;
   if (!scenarioId) return [];
+  if (
+    sectionTitleCache.length > 0 &&
+    scenarioId === cachedScenarioId &&
+    now - lastCacheFetchMs < CACHE_TTL_MS
+  ) {
+    return sectionTitleCache;
+  }
   const sections = await listSections(scenarioId);
+  cachedScenarioId = scenarioId;
   sectionTitleCache = sections.map((s) => s.title);
   lastCacheFetchMs = now;
   return sectionTitleCache;

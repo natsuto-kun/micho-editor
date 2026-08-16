@@ -11,7 +11,7 @@ export interface DirectiveBlock {
 
 const START_RE = /^:::(npc|handout|secret)\s*(.*)/;
 // NOTE: ネストした directive は非対応。内側の ::: が外側ブロックの閉じ行と誤認識される。
-const END_RE = /^:::$/;
+const END_RE = /^:::\s*$/;
 
 export function parseDirectiveBlocks(
   doc: Text,
