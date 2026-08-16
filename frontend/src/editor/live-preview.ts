@@ -7,16 +7,20 @@ import {
   WidgetType,
 } from "@codemirror/view";
 import { RangeSetBuilder } from "@codemirror/state";
-import { parseDirectiveBlocks } from "./directive-parser";
+import { parseDirectiveBlocks, DirectiveBlock } from "./directive-parser";
 import { NpcWidget } from "./widgets/NpcWidget";
 import { HandoutWidget } from "./widgets/HandoutWidget";
 import { SecretWidget } from "./widgets/SecretWidget";
 
-function makeWidget(block: ReturnType<typeof parseDirectiveBlocks>[number], body: string): WidgetType {
+function makeWidget(block: DirectiveBlock, body: string): WidgetType {
   switch (block.type) {
     case "npc": return new NpcWidget(block.params, body);
     case "handout": return new HandoutWidget(block.params, body);
     case "secret": return new SecretWidget(body);
+    default: {
+      const _exhaustive: never = block.type;
+      throw new Error(`Unknown directive type: ${_exhaustive}`);
+    }
   }
 }
 
