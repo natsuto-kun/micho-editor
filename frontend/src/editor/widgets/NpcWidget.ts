@@ -1,4 +1,4 @@
-import { WidgetType } from "@codemirror/view";
+import { WidgetType, EditorView } from "@codemirror/view";
 
 export class NpcWidget extends WidgetType {
   constructor(
@@ -8,11 +8,15 @@ export class NpcWidget extends WidgetType {
     super();
   }
 
-  eq(other: NpcWidget): boolean {
-    return other.params === this.params && other.body === this.body;
+  eq(other: WidgetType): boolean {
+    return (
+      other instanceof NpcWidget &&
+      other.params === this.params &&
+      other.body === this.body
+    );
   }
 
-  toDOM(): HTMLElement {
+  toDOM(_view: EditorView): HTMLElement {
     const [name = "", role = "", age = ""] = this.params
       .split("|")
       .map((p) => p.trim());
@@ -58,7 +62,7 @@ export class NpcWidget extends WidgetType {
     return container;
   }
 
-  ignoreEvent(): boolean {
+  ignoreEvent(_event: Event): boolean {
     return false;
   }
 }

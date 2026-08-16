@@ -1,4 +1,4 @@
-import { WidgetType } from "@codemirror/view";
+import { WidgetType, EditorView } from "@codemirror/view";
 
 export class HandoutWidget extends WidgetType {
   constructor(
@@ -8,11 +8,15 @@ export class HandoutWidget extends WidgetType {
     super();
   }
 
-  eq(other: HandoutWidget): boolean {
-    return other.params === this.params && other.body === this.body;
+  eq(other: WidgetType): boolean {
+    return (
+      other instanceof HandoutWidget &&
+      other.params === this.params &&
+      other.body === this.body
+    );
   }
 
-  toDOM(): HTMLElement {
+  toDOM(_view: EditorView): HTMLElement {
     const [id = "", target = ""] = this.params
       .split("|")
       .map((p) => p.trim());
@@ -48,7 +52,7 @@ export class HandoutWidget extends WidgetType {
     return container;
   }
 
-  ignoreEvent(): boolean {
+  ignoreEvent(_event: Event): boolean {
     return false;
   }
 }

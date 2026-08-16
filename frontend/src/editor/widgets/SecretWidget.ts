@@ -1,15 +1,15 @@
-import { WidgetType } from "@codemirror/view";
+import { WidgetType, EditorView } from "@codemirror/view";
 
 export class SecretWidget extends WidgetType {
   constructor(readonly body: string) {
     super();
   }
 
-  eq(other: SecretWidget): boolean {
-    return other.body === this.body;
+  eq(other: WidgetType): boolean {
+    return other instanceof SecretWidget && other.body === this.body;
   }
 
-  toDOM(): HTMLElement {
+  toDOM(_view: EditorView): HTMLElement {
     const container = document.createElement("div");
     container.className = "directive-secret";
 
@@ -25,7 +25,7 @@ export class SecretWidget extends WidgetType {
     return container;
   }
 
-  ignoreEvent(): boolean {
+  ignoreEvent(_event: Event): boolean {
     return false;
   }
 }
