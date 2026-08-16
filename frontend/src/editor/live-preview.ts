@@ -4,19 +4,55 @@ import {
   EditorView,
   ViewUpdate,
   Decoration,
+  WidgetType,
 } from "@codemirror/view";
+import { RangeSetBuilder } from "@codemirror/state";
+import { parseDirectiveBlocks } from "./directive-parser";
+import { NpcWidget } from "./widgets/NpcWidget";
+import { HandoutWidget } from "./widgets/HandoutWidget";
+import { SecretWidget } from "./widgets/SecretWidget";
+
+function makeWidget(block: ReturnType<typeof parseDirectiveBlocks>[number], body: string): WidgetType {
+  switch (block.type) {
+    case "npc": return new NpcWidget(block.params, body);
+    case "handout": return new HandoutWidget(block.params, body);
+    case "secret": return new SecretWidget(body);
+  }
+}
+
+function buildDecorations(view: EditorView): DecorationSet {
+  const cursor = view.state.selection.main.head;
+  const blocks = parseDirectiveBlocks(view.state.doc, view.visibleRanges);
+  const builder = new RangeSetBuilder<Decoration>();
+
+  for (const block of blocks) {
+    if (cursor >= block.from && cursor <= block.to) continue;
+
+    const body =
+      block.bodyFrom <= block.bodyTo
+        ? view.state.doc.sliceString(block.bodyFrom, block.bodyTo)
+        : "";
+
+    const widget = makeWidget(block, body);
+    builder.add(block.from, block.to, Decoration.replace({ widget, block: true }));
+  }
+
+  return builder.finish();
+}
 
 export const livePreview = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet;
 
-    constructor(_view: EditorView) {
-      this.decorations = Decoration.none;
+    constructor(view: EditorView) {
+      this.decorations = buildDecorations(view);
     }
 
     update(u: ViewUpdate) {
-      if (u.view.composing) return; // IME 変換中は装飾を再構築しない
-      // M0.5: 装飾なし。M3 で :::npc 等のウィジェット実装を追加する
+      if (u.view.composing) return;
+      if (u.docChanged || u.selectionSet || u.viewportChanged) {
+        this.decorations = buildDecorations(u.view);
+      }
     }
   },
   {
