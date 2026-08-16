@@ -194,6 +194,73 @@ Plan: `docs/superpowers/plans/2026-08-16-m0-skeleton.md`
 
 ---
 
+---
+
+# M0.5 実装ログ
+
+Plan: `docs/superpowers/plans/2026-08-16-m0.5-ime-validation.md`
+ブランチ: `feature/1-IME-check`
+
+## Task 1: autosave.ts — composing ガード付きスタブ
+**ステータス:** ✅ 完了
+
+### 実施内容
+- `frontend/src/editor/autosave.ts` を新規作成（33行）
+  - `view.composing` ガード（変換確定前は保存スキップ）
+  - 800ms debounce + 5秒強制フラッシュ
+  - M0.5 では `console.log("[autosave] section=... chars=...")` のみ
+
+### スペックレビュー: ✅ PASS / 品質レビュー: ✅ PASS
+
+---
+
+## Task 2: live-preview.ts — composing ガード付きスケルトン
+**ステータス:** ✅ 完了
+
+### 実施内容
+- `frontend/src/editor/live-preview.ts` を新規作成（29行）
+  - `u.view.composing` ガード（変換中は装飾再構築スキップ）
+  - M0.5 では `Decoration.none`（装飾なし）
+  - `atomicRanges` 提供（M3 でウィジェット追加後に効く）
+
+### スペックレビュー: ✅ PASS / 品質レビュー: ✅ PASS
+
+---
+
+## Task 3: setup.ts 更新
+**ステータス:** ✅ 完了
+
+### 実施内容
+- `createEditorState` / `createEditorView` に `sectionId: string` 引数追加
+- `autosave` / `livePreview` の import 追加
+- extensions に `livePreview` と `autosave(sectionId)` を組み込み
+
+### スペックレビュー: ✅ PASS / 品質レビュー: ✅ PASS
+
+---
+
+## Task 4: App.tsx — IME デバッグインジケータ追加
+**ステータス:** ✅ 完了
+
+### 実施内容
+- `useState(composing)` で変換中状態を管理
+- `compositionstart` / `compositionend` リスナーを `view.dom` に登録
+- 変換中: 黄色バッジ `"⌨ IME 変換中 — composing: true"`
+- 変換外: `"composing: false"` (ダークバー)
+- `createEditorView` に `"m0-debug"` sectionId を渡す
+- `npx tsc --noEmit` エラーなし / `npm run build` dist/ 生成成功
+
+### スペックレビュー: ✅ PASS / 品質レビュー: ✅ PASS
+
+---
+
+## Task 5: macOS IME 実機確認（ユーザー実施）
+**ステータス:** ⏳ 確認待ち
+
+コミット: `3498a67`（feature/1-IME-check ブランチ）
+
+---
+
 ## 注記: Go バージョン問題と対処
 
 `go.mod` の `go 1.25.0` は正しい値。wails v2.14.0 / modernc.org/sqlite v1.56.0 / golang.org/x/* が全て Go 1.25 以上を要求するため `go mod tidy` が自動設定する。
