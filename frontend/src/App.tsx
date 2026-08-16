@@ -3,6 +3,7 @@ import { EditorView } from "@codemirror/view";
 import { EventsOn } from "../wailsjs/runtime/runtime";
 import { createEditorView } from "./editor/setup";
 import { Outline } from "./components/Outline";
+import { SearchPanel } from "./components/SearchPanel";
 import { useScenarioStore } from "./stores/scenarioStore";
 import { useUIStore } from "./stores/uiStore";
 import * as API from "./api/bindings";
@@ -18,6 +19,8 @@ export default function App() {
 
   const activeSectionId = useUIStore((s) => s.activeSectionId);
   const setActiveSectionId = useUIStore((s) => s.setActiveSectionId);
+  const searchOpen = useUIStore((s) => s.searchOpen);
+  const setSearchOpen = useUIStore((s) => s.setSearchOpen);
 
   // Flush current editor content to the backend.
   const flushCurrent = useCallback(async () => {
@@ -97,6 +100,20 @@ export default function App() {
     return off;
   }, [flushCurrent]);
 
+  // Cmd+K (macOS) / Ctrl+K (Windows/Linux) toggles the search panel.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        useUIStore.getState().setSearchOpen(
+          !useUIStore.getState().searchOpen
+        );
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   // Add a new section at the end.
   const handleAddSection = useCallback(async () => {
     const sid = useScenarioStore.getState().scenarioId;
@@ -121,15 +138,38 @@ export default function App() {
   return (
     <div style={{ height: "100vh", display: "flex", overflow: "hidden" }}>
       {/* Sidebar */}
-      <div style={{ width: 240, flexShrink: 0, display: "flex", flexDirection: "column" }}>
+      <div
+        style={{
+          width: 240,
+          flexShrink: 0,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         <Outline
           onSectionClick={switchSection}
           onAddSection={handleAddSection}
         />
       </div>
 
-      {/* Editor pane */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      {/* Editor pane — position:relative so SearchPanel can overlay */}
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          position: "relative",
+        }}
+      >
+        {searchOpen && scenarioId && (
+          <SearchPanel
+            scenarioId={scenarioId}
+            onHitClick={switchSection}
+            onClose={() => setSearchOpen(false)}
+          />
+        )}
+
         {activeSectionId === null && (
           <div
             style={{
