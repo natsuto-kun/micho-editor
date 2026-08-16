@@ -29,14 +29,17 @@ export async function directiveCompletion(
   const textBefore = line.text.slice(0, context.pos - line.from);
 
   // ::: ディレクティブ補完
-  if (/^:::\w*$/.test(textBefore)) {
+  const directiveMatch = textBefore.match(/^:::(\w*)$/);
+  if (directiveMatch) {
+    const query = directiveMatch[1];
     return {
-      from: line.from + 3,
+      from: context.pos - query.length,
       options: [
         { label: "npc", apply: "npc Name | Role | Age\n\n:::" },
         { label: "handout", apply: "handout HO1 | PlayerA\n\n:::" },
         { label: "secret", apply: "secret\n\n:::" },
       ],
+      validFor: /^\w*$/,
     };
   }
 
@@ -71,12 +74,12 @@ export async function directiveCompletion(
   // #tag 補完（Markdown 見出しは除外）
   const tagMatch = textBefore.match(/#([^\s#]*)$/);
   if (tagMatch) {
-    const beforeHash = textBefore.slice(0, textBefore.lastIndexOf("#"));
-    if (/^\s*$/.test(beforeHash)) return null; // 行頭 → Markdown 見出し
     const query = tagMatch[1];
     const docText = context.state.doc.toString();
-    const tags = [...docText.matchAll(/#([^\s#]+)/g)]
-      .map((m) => m[1])
+    const tags = docText
+      .split("\n")
+      .filter((l) => !/^#+\s/.test(l))
+      .flatMap((l) => [...l.matchAll(/#([^\s#]+)/g)].map((m) => m[1]))
       .filter((v, i, arr) => arr.indexOf(v) === i);
     return {
       from: context.pos - query.length - 1,
